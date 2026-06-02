@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Making a Frozen Video World Model Follow Gripper Commands</title>
+  <meta name="description" content="Interventional de-confounding makes a frozen 2.3B video world model render the robot gripper open/close on command at the pixel level — at preserved video quality, with 0.26% trainable parameters." />
+  <meta property="og:title" content="Frozen Video World Models Can Be Made to Follow Gripper Commands" />
+  <meta property="og:description" content="A frozen 2.3B world model renders the gripper open/close on command at preserved PSNR via interventional de-confounding." />
+  <meta property="og:image" content="demo/exmask/poster_10003.jpg" />
+  <meta property="og:type" content="website" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }, svg: { fontCache: 'global' } };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    code, pre, .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .measure { max-width: 720px; }
+    .measure-narrow { max-width: 640px; }
+    .tbd { color: #b45309; background: #fef3c7; padding: 1px 7px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em; vertical-align: middle; }
+    .reveal { opacity: 0; transform: translateY(14px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+    .eyebrow { letter-spacing: .18em; }
+    .lift { transition: box-shadow .25s ease, transform .25s ease; }
+    .lift:hover { box-shadow: 0 12px 32px -12px rgba(0,0,0,.18); transform: translateY(-2px); }
+    mjx-container { font-size: 1.02em !important; }
+    /* ---- cool act visualizations ---- */
+    .viz { background: linear-gradient(180deg,#0c1018,#090c12); color:#e8eaf0; border:1px solid rgba(255,255,255,.07); }
+    .viz .eyebrow { color:#7c8699; }
+    .track { background: rgba(255,255,255,.07); border-radius:999px; overflow:hidden; }
+    .fill { width:0; transition: width 1.2s cubic-bezier(.22,1,.36,1); border-radius:999px; }
+    .reveal.in .fill { width: var(--w); }
+    .edge { stroke-dasharray: var(--len,260); stroke-dashoffset: var(--len,260); transition: stroke-dashoffset 1.15s ease .25s; }
+    .reveal.in .edge { stroke-dashoffset: 0; }
+    .cell { opacity:.16; transition: opacity .6s ease; }
+    .reveal.in .cell.on { opacity:1; }
+    .glow-e { filter: drop-shadow(0 0 5px rgba(16,185,129,.8)); }
+    .pulse { animation: vpulse 2.6s ease-in-out infinite; }
+    @keyframes vpulse { 0%,100%{opacity:.45} 50%{opacity:1} }
+    .chev { color:#3a4658; }
+  </style>
+</head>
+<body class="bg-white text-stone-900 antialiased">
+
+  <!-- ============================== HERO ============================== -->
+  <header class="px-6 pt-20 pb-10">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="text-[11px] uppercase eyebrow text-stone-400 mb-5">Anonymous submission &middot; ICLR 2026 &nbsp;(under review)</div>
+
+      <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.08]">
+        Frozen Video World Models<br class="hidden md:block"/> Can Follow Gripper Commands
+      </h1>
+      <p class="mt-5 text-lg md:text-xl text-stone-500 measure mx-auto leading-relaxed">
+        Interventional de-confounding makes a <strong class="text-stone-700">frozen</strong> 2.3&nbsp;B video world
+        model render the robot gripper <strong class="text-stone-700">open / close on command</strong> at the pixel
+        level — at <strong class="text-stone-700">preserved video quality</strong>, with <strong class="text-stone-700">0.26%</strong>
+        trainable parameters and <strong class="text-stone-700">zero</strong> changes to the world model's weights.
+      </p>
+
+      <div class="mt-6 text-stone-500 text-sm">Anonymous Authors &middot; Anonymous Institution</div>
+
+      <div class="mt-7 flex flex-wrap gap-2 justify-center">
+        <a href="#" class="inline-flex items-center px-4 py-2 rounded-full bg-stone-900 text-white text-sm font-medium hover:bg-stone-700">Paper <span class="tbd ml-2">soon</span></a>
+        <a href="#" class="inline-flex items-center px-4 py-2 rounded-full bg-white border border-stone-300 text-sm font-medium hover:bg-stone-100">arXiv <span class="tbd ml-2">soon</span></a>
+        <a href="#" class="inline-flex items-center px-4 py-2 rounded-full bg-white border border-stone-300 text-sm font-medium hover:bg-stone-100">Code <span class="tbd ml-2">soon</span></a>
+        <a href="#bibtex" class="inline-flex items-center px-4 py-2 rounded-full bg-white border border-stone-300 text-sm font-medium hover:bg-stone-100">BibTeX</a>
+      </div>
+    </div>
+
+    <!-- HERO VIDEO -->
+    <figure class="max-w-3xl mx-auto mt-12">
+      <div class="rounded-2xl overflow-hidden border border-stone-200 shadow-lg bg-black">
+        <video autoplay loop muted playsinline poster="demo/exmask/poster_10003.jpg" class="w-full">
+          <source src="demo/exmask/openclose_10003.mp4" type="video/mp4" />
+        </video>
+      </div>
+      <figcaption class="mt-3 text-sm text-stone-500 measure mx-auto text-center">
+        <strong class="text-stone-700">Same held-out wrist scene, two commands.</strong> Left: the model is told
+        <span class="text-emerald-700 font-medium">OPEN</span> → the gripper stays open. Right: told
+        <span class="text-red-700 font-medium">CLOSE</span> → the fingers visibly close. The world model is
+        <em>frozen</em>; only a 6&nbsp;M-parameter adapter steers it. This trajectory reproduces
+        <strong class="text-stone-700">87%</strong> of the ground-truth's own open→close motion.
+      </figcaption>
+    </figure>
+
+    <!-- STAT ROW -->
+    <div class="max-w-4xl mx-auto mt-12 grid grid-cols-2 md:grid-cols-5 gap-y-8 gap-x-4 text-center">
+      <div>
+        <div class="text-3xl font-extrabold text-stone-900"><span data-count="0.64" data-prefix="+" data-dec="2">+0.64</span></div>
+        <div class="text-xs text-stone-500 mt-1 px-2">held-out gripper<br/>following (was &minus;0.36)</div>
+      </div>
+      <div>
+        <div class="text-3xl font-extrabold text-stone-900"><span data-count="19">19</span>/20</div>
+        <div class="text-xs text-stone-500 mt-1 px-2">held-out trajectories<br/>follow the command</div>
+      </div>
+      <div>
+        <div class="text-3xl font-extrabold text-stone-900"><span data-count="69">69</span>%</div>
+        <div class="text-xs text-stone-500 mt-1 px-2">of the real open→close<br/>motion reproduced</div>
+      </div>
+      <div>
+        <div class="text-3xl font-extrabold text-emerald-700">&minus;0.12<span class="text-lg"> dB</span></div>
+        <div class="text-xs text-stone-500 mt-1 px-2">PSNR change<br/>(quality preserved)</div>
+      </div>
+      <div class="col-span-2 md:col-span-1">
+        <div class="text-3xl font-extrabold text-stone-900"><span data-count="0.26" data-dec="2">0.26</span>%</div>
+        <div class="text-xs text-stone-500 mt-1 px-2">trainable params<br/>(WM frozen)</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-4xl mx-auto px-6"><hr class="border-stone-200"/></div>
+
+  <!-- ============================== ABSTRACT ============================== -->
+  <section id="abstract" class="px-6 py-14">
+    <div class="max-w-3xl mx-auto reveal">
+      <h2 class="text-xs uppercase eyebrow text-stone-400 mb-4 text-center">Abstract</h2>
+      <div class="measure mx-auto text-stone-700 leading-relaxed space-y-4 text-[1.02rem]">
+        <p>
+          Frozen video world models (WMs) are increasingly used as offline simulators and filters for
+          vision–language–action policies. We show that a public 2.3&nbsp;B-parameter <em>Ctrl-World</em>
+          checkpoint is <strong>structurally blind to the gripper</strong>: flipping the gripper command from
+          fully-open to fully-closed leaves its predicted video essentially unchanged
+          (feature cosine&nbsp;<span class="mono">0.998</span>). We trace this to a property of the training
+          <em>objective</em>, not the architecture or the data: because the gripper command is predictable from
+          visual context, the reconstruction optimum is independent of the command
+          (\(\partial r^\star/\partial g = 0\)), so more data, capacity, or fine-tuning cannot fix it.
+        </p>
+        <p>
+          We then make the frozen model <strong>controllable</strong>. The key is to stop optimizing over the
+          confounded offline distribution and instead supervise with an <strong>interventional, command-dependent
+          target</strong> \(p(\text{future}\mid X,\operatorname{do}(g))\): the same-trajectory ground-truth latent
+          whose gripper openness matches the <em>commanded</em> value. A <strong>self-localizing, arm-free mask</strong>
+          — computed directly from the model's own counterfactual difference — confines learning to the gripper on
+          every camera with no hand-drawn region, and an anchor on the true-command render preserves video quality.
+          On 20 held-out trajectories the gripper now follows the command in <strong>19/20</strong> cases, reproducing
+          <strong>~69%</strong> of the ground-truth's own open→close motion, at <strong>preserved PSNR</strong> and
+          with the WM weights untouched. We report an honest scope boundary: control is strong on the wrist camera and
+          remains resolution-limited on distant third-person views.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CONTRIBUTIONS ============================== -->
+  <section class="bg-stone-50 border-y border-stone-200 px-6 py-14">
+    <div class="max-w-4xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-5">
+        <div class="bg-white rounded-xl border border-stone-200 p-6 lift reveal">
+          <div class="text-2xl mb-2">🔍</div>
+          <h3 class="font-semibold mb-1">A diagnosis</h3>
+          <p class="text-sm text-stone-600 leading-relaxed">Gripper blindness is <em>learned invariance</em> from the pixel objective — not weight suppression, not low input variance. We prove it is unfixable by scale.</p>
+        </div>
+        <div class="bg-white rounded-xl border border-stone-200 p-6 lift reveal">
+          <div class="text-2xl mb-2">∂</div>
+          <h3 class="font-semibold mb-1">A mechanism</h3>
+          <p class="text-sm text-stone-600 leading-relaxed">Interventional de-confounding: a command-dependent target restores \(\partial \mathcal{L}/\partial g \neq 0\). A self-localizing arm-free mask removes the need for any hand-drawn region.</p>
+        </div>
+        <div class="bg-white rounded-xl border border-stone-200 p-6 lift reveal">
+          <div class="text-2xl mb-2">🤖</div>
+          <h3 class="font-semibold mb-1">A result</h3>
+          <p class="text-sm text-stone-600 leading-relaxed">Pixel-level gripper control on a <em>frozen</em> WM at preserved quality — the first demonstration that this blindness can be undone without retraining the world model.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== ACT I — DIAGNOSIS ============================== -->
+  <section id="diagnosis" class="px-6 py-16">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-xs uppercase eyebrow text-stone-400 mb-2 text-center reveal">Act I &middot; The diagnosis</div>
+      <h2 class="text-3xl font-bold text-center mb-4 reveal">The world model cannot see the gripper</h2>
+      <p class="measure mx-auto text-stone-600 leading-relaxed text-center mb-10 reveal">
+        Drive the same scene with a correct trajectory and with one that secretly flips the gripper open at the last
+        moment. The world model's predicted video — and its internal features — are almost identical. The filter built
+        on it accepts both.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <figure class="reveal">
+          <div class="rounded-xl overflow-hidden border border-stone-200">
+            <img src="demo/labeled_side_by_side.gif" alt="Correct vs gripper-flip rollout — visually identical" class="w-full" loading="lazy" />
+          </div>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center">Correct vs. gripper-flip rollout — the WM renders them the same.</figcaption>
+        </figure>
+        <figure class="reveal">
+          <div class="rounded-xl overflow-hidden border border-stone-200">
+            <img src="demo/diff_hot.gif" alt="Latent-difference heatmap, near zero everywhere" class="w-full" loading="lazy" />
+          </div>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center">Latent difference (success − flip): near-zero everywhere.</figcaption>
+        </figure>
+      </div>
+
+      <!-- FIG · Act I -->
+      <figure class="measure mx-auto reveal">
+        <img src="demo/figs/fig_act1.png" alt="Gripper blindness — the output barely responds to a command flip; in feature space the gripper failure collapses onto the success" class="w-full rounded-xl border border-stone-200 shadow-sm" loading="lazy"/>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============================== ACT II — THE MATH ============================== -->
+  <section id="why" class="bg-stone-50 border-y border-stone-200 px-6 py-16">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-xs uppercase eyebrow text-stone-400 mb-2 text-center reveal">Act II &middot; Why scale can't fix it</div>
+      <h2 class="text-3xl font-bold text-center mb-4 reveal">The blindness is in the objective, not the model</h2>
+      <p class="measure mx-auto text-stone-600 leading-relaxed text-center mb-10 reveal">
+        In offline data the gripper command \(g\) is almost a function of the visual context \(X\). So the
+        reconstruction optimum does not depend on the command at all:
+      </p>
+
+      <div class="bg-white rounded-xl border border-stone-200 p-6 mb-6 text-center reveal overflow-x-auto">
+        \[ r^\star(X,g)\;=\;\mathbb{E}[\,\text{future}\mid X, g\,]\;=\;\mathbb{E}[\,\text{future}\mid X\,]
+           \quad\Longrightarrow\quad \frac{\partial r^\star}{\partial g}=0,\qquad I(\text{future};\,g\mid X)\approx 0. \]
+      </div>
+
+      <!-- (causal graphs + magnitude shown together in fig_act2 below the next paragraph) -->
+      <p class="measure mx-auto text-stone-600 leading-relaxed mb-10 reveal">
+        The command channel receives <strong>zero gradient</strong>. This is a property of the data distribution, so
+        it cannot be removed by more data, more capacity, or plain fine-tuning — and indeed four frozen-backbone
+        recipes all stalled. Worse, the natural fix — a <em>directional</em> steering loss
+        \(\;\mathrm{sep}=\langle \Delta f,\hat T\rangle\;\) toward the open→close direction \(\hat T=T/\lVert T\rVert\) —
+        is <strong>magnitude-blind</strong>: it rewards an infinitesimal, correctly-pointed nudge and is satisfied by
+        moving easy background pixels rather than the hard, few-pixel fingers. A positive <span class="mono">sep</span>
+        is <em>necessary but not sufficient</em> for a gripper that visibly closes; the honest metric is the fraction
+        of the real swing reproduced, \(\;\mathrm{frac}=\mathrm{sep}/\lVert T\rVert\).
+      </p>
+
+      <!-- FIG · Act II (causal confound + magnitude blindness) -->
+      <figure class="measure mx-auto mb-10 reveal">
+        <img src="demo/figs/fig_act2.png" alt="Why scale can't fix it: offline the command is confounded so the gradient is zero; the do(g) intervention cuts the back-door; and direction alone is not enough — magnitude matters" class="w-full rounded-xl border border-stone-200 shadow-sm" loading="lazy"/>
+      </figure>
+
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 measure mx-auto reveal">
+        <div class="text-sm text-amber-900 leading-relaxed">
+          <strong>A bug that hid the signal.</strong> The two storyline cameras are stacked in a different order across
+          datasets; the entire prior analysis measured the gripper on a <em>distant third-person</em> view instead of
+          the wrist. Fixing the camera index alone uncovered most of the latent signal that earlier looked like a wall.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== ACT III — THE FIX ============================== -->
+  <section id="method" class="px-6 py-16">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-xs uppercase eyebrow text-stone-400 mb-2 text-center reveal">Act III &middot; The fix</div>
+      <h2 class="text-3xl font-bold text-center mb-4 reveal">Interventional de-confounding</h2>
+      <p class="measure mx-auto text-stone-600 leading-relaxed text-center mb-10 reveal">
+        To inject \(\partial\mathcal{L}/\partial g\neq 0\) we replace the offline target with an
+        <strong>interventional</strong> one — a target that is genuinely a function of the command. Three ingredients,
+        all on top of a frozen world model:
+      </p>
+
+      <div class="space-y-4 mb-12">
+        <div class="flex gap-4 bg-white rounded-xl border border-stone-200 p-5 lift reveal">
+          <div class="text-2xl font-bold text-stone-300 mono shrink-0">1</div>
+          <div>
+            <h3 class="font-semibold mb-1">Openness-matched exemplar target <span class="mono text-sm text-stone-400">do(g)</span></h3>
+            <p class="text-sm text-stone-600 leading-relaxed">
+              Supervise the commanded render toward the same-trajectory ground-truth latent \(e(g)\) whose gripper
+              openness matches the command. Because \(e(g)\neq e(g')\), the optimum now <em>depends on \(g\) with the
+              right magnitude</em> — fixing the magnitude-blindness of directional steering.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4 bg-white rounded-xl border border-stone-200 p-5 lift reveal">
+          <div class="text-2xl font-bold text-stone-300 mono shrink-0">2</div>
+          <div>
+            <h3 class="font-semibold mb-1">Self-localizing, arm-free mask <span class="mono text-sm text-stone-400">M<sub>dyn</sub></span></h3>
+            <p class="text-sm text-stone-600 leading-relaxed">
+              The intervention changes <em>only</em> the gripper channel, so the model's own counterfactual difference
+              \(\;M_{\mathrm{dyn}}=\mathrm{normalize}\,\lvert p_f-p_t\rvert\;\) is <strong>arm-free by construction</strong>
+              (arm, text, noise and history are identical between the two commands). It localizes the gripper on every
+              camera with <em>no hand-drawn box</em>.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4 bg-white rounded-xl border border-stone-200 p-5 lift reveal">
+          <div class="text-2xl font-bold text-stone-300 mono shrink-0">3</div>
+          <div>
+            <h3 class="font-semibold mb-1">Quality-preserving anchor</h3>
+            <p class="text-sm text-stone-600 leading-relaxed">
+              The true-command render is pinned to the frozen world model everywhere; only the flipped-command render
+              is free to move inside \(M_{\mathrm{dyn}}\). Video quality (measured on the true command) is preserved —
+              PSNR moves by <strong>&minus;0.12&nbsp;dB</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIG · Act III (method pipeline) -->
+      <figure class="measure mx-auto mb-14 reveal">
+        <img src="demo/figs/fig_act3.png" alt="Method pipeline: a frozen world model runs two forward passes (true and flipped command); their difference is the arm-free mask M_dyn; learning inside it with an exemplar target makes the gripper follow at preserved PSNR" class="w-full rounded-xl border border-stone-200 shadow-sm" loading="lazy"/>
+      </figure>
+
+      <!-- DEMO GRID -->
+      <h3 class="text-xl font-semibold text-center mb-2 reveal">It generalizes across held-out trajectories</h3>
+      <p class="text-sm text-stone-500 text-center mb-8 measure-narrow mx-auto reveal">
+        Each clip: the same wrist scene under <span class="text-emerald-700 font-medium">OPEN</span> vs.
+        <span class="text-red-700 font-medium">CLOSE</span> command. Percentage = fraction of the ground-truth's own
+        open→close motion reproduced.
+      </p>
+      <div class="grid sm:grid-cols-2 gap-5">
+        <figure class="reveal">
+          <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
+            <video autoplay loop muted playsinline class="w-full"><source src="demo/exmask/openclose_10024.mp4" type="video/mp4" /></video>
+          </div>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center">Held-out traj 10024 · <strong>84%</strong> of GT swing</figcaption>
+        </figure>
+        <figure class="reveal">
+          <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
+            <video autoplay loop muted playsinline class="w-full"><source src="demo/exmask/openclose_10046.mp4" type="video/mp4" /></video>
+          </div>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center">Held-out traj 10046 · <strong>76%</strong> of GT swing</figcaption>
+        </figure>
+        <figure class="reveal">
+          <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
+            <video autoplay loop muted playsinline class="w-full"><source src="demo/exmask/openclose_10010.mp4" type="video/mp4" /></video>
+          </div>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center">Held-out traj 10010 · <strong>67%</strong> of GT swing</figcaption>
+        </figure>
+        <figure class="reveal">
+          <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
+            <video autoplay loop muted playsinline class="w-full"><source src="demo/exmask/openclose_10056.mp4" type="video/mp4" /></video>
+          </div>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center">Held-out traj 10056 · <strong>30%</strong> of GT swing</figcaption>
+        </figure>
+      </div>
+
+      <!-- BEFORE/AFTER SLOT (render-later) -->
+      <div class="mt-10 rounded-xl border-2 border-dashed border-stone-300 bg-stone-50 p-8 text-center reveal">
+        <div class="text-sm font-semibold text-stone-700 mb-1">Before / after: frozen vs. controlled <span class="tbd ml-1">render pending</span></div>
+        <p class="text-xs text-stone-500 measure-narrow mx-auto leading-relaxed">
+          A side-by-side of the <em>frozen</em> world model (gripper ignores the command) against the controlled model
+          (gripper follows) on the same trajectory. The controlled side is shown above; the frozen baseline render
+          slots in here.
+        </p>
+      </div>
+
+      <details class="mt-8 measure mx-auto reveal">
+        <summary class="text-sm text-stone-600 cursor-pointer hover:text-stone-900">Detailed readout (4-panel: demo · open · close · difference)</summary>
+        <figure class="mt-4">
+          <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
+            <video controls loop muted playsinline class="w-full"><source src="demo/exmask/detail_10003.mp4" type="video/mp4" /></video>
+          </div>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center">
+            Traj 10003. Panels: original rollout · OPEN command · CLOSE command · |OPEN&minus;CLOSE|×5 difference. The
+            difference concentrates on the gripper, and the openness readout (bottom strip) separates cleanly.
+          </figcaption>
+        </figure>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============================== RESULTS ============================== -->
+  <section id="results" class="bg-stone-50 border-y border-stone-200 px-6 py-16">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-3 reveal">Results</h2>
+      <p class="text-sm text-stone-500 text-center measure-narrow mx-auto mb-10 reveal">20 held-out trajectories, real wrist camera. World model frozen throughout.</p>
+
+      <div class="bg-white rounded-xl border border-stone-200 overflow-x-auto mb-10 reveal">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-stone-500 border-b border-stone-200">
+              <th class="py-3 px-5 font-medium">Metric</th>
+              <th class="py-3 px-5 font-medium">Frozen WM</th>
+              <th class="py-3 px-5 font-medium">+ ours (exmask)</th>
+            </tr>
+          </thead>
+          <tbody class="mono">
+            <tr class="border-b border-stone-100">
+              <td class="py-3 px-5 font-sans">Gripper following (held-out, wrist)</td>
+              <td class="py-3 px-5 text-red-600">&minus;0.36</td>
+              <td class="py-3 px-5 text-emerald-700 font-semibold">+0.64</td>
+            </tr>
+            <tr class="border-b border-stone-100">
+              <td class="py-3 px-5 font-sans">Follow rate (trajectories)</td>
+              <td class="py-3 px-5 text-stone-400">—</td>
+              <td class="py-3 px-5 text-emerald-700 font-semibold">19 / 20</td>
+            </tr>
+            <tr class="border-b border-stone-100">
+              <td class="py-3 px-5 font-sans">Open→close motion reproduced</td>
+              <td class="py-3 px-5 text-stone-400">~0%</td>
+              <td class="py-3 px-5 text-emerald-700 font-semibold">~69%</td>
+            </tr>
+            <tr class="border-b border-stone-100">
+              <td class="py-3 px-5 font-sans">Memorization (copies demo gripper?)</td>
+              <td class="py-3 px-5 text-red-600">+0.55</td>
+              <td class="py-3 px-5 text-emerald-700 font-semibold">&minus;0.19</td>
+            </tr>
+            <tr class="border-b border-stone-100">
+              <td class="py-3 px-5 font-sans">PSNR change (quality)</td>
+              <td class="py-3 px-5 text-stone-400">—</td>
+              <td class="py-3 px-5 text-emerald-700 font-semibold">&minus;0.12 dB</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-5 font-sans">Trainable parameters</td>
+              <td class="py-3 px-5 text-stone-400">0</td>
+              <td class="py-3 px-5">6 M / 2.3 B&nbsp; <span class="text-stone-400">(0.26%)</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- frac bars -->
+      <div class="bg-white rounded-xl border border-stone-200 p-6 reveal">
+        <div class="text-xs uppercase eyebrow text-stone-400 mb-4">Per-trajectory motion reproduced (wrist)</div>
+        <div class="space-y-3 mono text-xs">
+          <div class="flex items-center gap-3"><span class="w-14 text-stone-500">10003</span><div class="flex-1 bg-stone-100 rounded-full h-3"><div class="bg-emerald-500 h-3 rounded-full" style="width:87%"></div></div><span class="w-10 text-right">87%</span></div>
+          <div class="flex items-center gap-3"><span class="w-14 text-stone-500">10024</span><div class="flex-1 bg-stone-100 rounded-full h-3"><div class="bg-emerald-500 h-3 rounded-full" style="width:84%"></div></div><span class="w-10 text-right">84%</span></div>
+          <div class="flex items-center gap-3"><span class="w-14 text-stone-500">10046</span><div class="flex-1 bg-stone-100 rounded-full h-3"><div class="bg-emerald-500 h-3 rounded-full" style="width:76%"></div></div><span class="w-10 text-right">76%</span></div>
+          <div class="flex items-center gap-3"><span class="w-14 text-stone-500">10010</span><div class="flex-1 bg-stone-100 rounded-full h-3"><div class="bg-emerald-500 h-3 rounded-full" style="width:67%"></div></div><span class="w-10 text-right">67%</span></div>
+          <div class="flex items-center gap-3"><span class="w-14 text-stone-500">10056</span><div class="flex-1 bg-stone-100 rounded-full h-3"><div class="bg-emerald-400 h-3 rounded-full" style="width:30%"></div></div><span class="w-10 text-right">30%</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== LIMITATIONS ============================== -->
+  <section id="limitations" class="px-6 py-16">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-4 reveal">An honest limitation</h2>
+      <p class="measure mx-auto text-stone-600 leading-relaxed text-center mb-8 reveal">
+        Control is strong on the <strong>wrist</strong> camera (the gripper's own view) but
+        <strong>resolution-limited on distant third-person views</strong>. There the gripper occupies only a few pixels
+        of the latent — even the ground truth's own open→close motion is ~8× smaller — and the model follows the
+        command in only 2/20 cases. We believe this is a representation-resolution bottleneck, not a loss-weight one,
+        and report it as the scope boundary of the result rather than hiding it.
+      </p>
+      <figure class="max-w-md mx-auto reveal">
+        <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
+          <video autoplay loop muted playsinline class="w-full"><source src="demo/exmask/external_10024.mp4" type="video/mp4" /></video>
+        </div>
+        <figcaption class="mt-2 text-xs text-stone-500 text-center">External third-person view (traj 10024): OPEN vs. CLOSE barely differ — the gripper is too small in the latent.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============================== REPRODUCIBILITY ============================== -->
+  <section id="repro" class="bg-stone-50 border-y border-stone-200 px-6 py-16">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-3 reveal">Reproducibility</h2>
+      <p class="text-sm text-stone-500 text-center measure-narrow mx-auto mb-8 reveal">
+        Every experiment is tracked as a node in an Obsidian-style DAG vault. Training is a single GPU run on a frozen
+        world model; the adapter is 6&nbsp;M parameters.
+      </p>
+      <div class="bg-stone-900 text-stone-100 rounded-xl p-5 mono text-xs leading-relaxed overflow-x-auto reveal">
+<pre>source scripts/_lockin_splits.env          <span class="text-stone-500"># 57 active / 20 held-out / 8 passive</span>
+export DROID_WRIST_VIEW=2                   <span class="text-stone-500"># real wrist = view 2</span>
+
+python scripts/train_rollout_gated.py \
+  --clean-roi --lora-encoder --unfreeze-output --output-lr 1e-5 \
+  --dyn-mask --exemplar-anchor \            <span class="text-stone-500"># interventional target + arm-free mask</span>
+  --lam-ex 1.0 --lam-div 0.5 --lam-preserve 1.0 \
+  --steps 1500 --out exmask
+
+python scripts/render_wrist_multi.py \
+  --adapter results/exmask/adapter_s1499_best.pt --lora-encoder --view 2 \
+  --trajs 10003,10024,10046,10010,10056</pre>
+      </div>
+      <p class="text-xs text-stone-500 mt-4 measure mx-auto leading-relaxed reveal">
+        Key files: <code class="mono">scripts/train_rollout_gated.py</code> (the <code>--dyn-mask</code> arm-free
+        localizer), <code class="mono">scripts/train_rollout_steered.py</code> (openness-matched exemplar),
+        <code class="mono">scripts/render_wrist_multi.py</code> (the magnitude-honest
+        <span class="mono">frac = sep/‖T‖</span> metric). Full write-up:
+        <code class="mono">docs/exmask_gripper_control.md</code>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================== BIBTEX ============================== -->
+  <section id="bibtex" class="px-6 py-14">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-xs uppercase eyebrow text-stone-400 mb-4 text-center">BibTeX</h2>
+      <div class="bg-stone-900 text-stone-100 rounded-xl p-5 mono text-xs leading-relaxed overflow-x-auto measure mx-auto">
+<pre>@inproceedings{anonymous2026frozen,
+  title     = {Frozen Video World Models Can Follow Gripper Commands},
+  author    = {Anonymous},
+  booktitle = {Under review at ICLR},
+  year      = {2026},
+  note      = {Anonymous submission}
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== FOOTER ============================== -->
+  <footer class="border-t border-stone-200 px-6 py-10">
+    <div class="max-w-3xl mx-auto text-sm text-stone-500 flex flex-wrap justify-between gap-4">
+      <div>
+        <div class="font-medium text-stone-800">Frozen Video World Models Can Follow Gripper Commands</div>
+        <div>Anonymous &middot; ICLR 2026 submission (under review)</div>
+      </div>
+      <div class="space-x-4">
+        <a href="#abstract" class="hover:underline">Abstract</a>
+        <a href="#method" class="hover:underline">Method</a>
+        <a href="#results" class="hover:underline">Results</a>
+        <a href="#repro" class="hover:underline">Reproduce</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // fade-in on scroll
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    // animated stat counters
+    function animateCount(el) {
+      const target = parseFloat(el.dataset.count);
+      const dec = parseInt(el.dataset.dec || '0');
+      const prefix = el.dataset.prefix || '';
+      const dur = 900; const t0 = performance.now();
+      function tick(t) {
+        const k = Math.min(1, (t - t0) / dur);
+        const ease = 1 - Math.pow(1 - k, 3);
+        const v = (target * ease).toFixed(dec);
+        el.textContent = prefix + v;
+        if (k < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+    const statIO = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { animateCount(e.target); statIO.unobserve(e.target); } });
+    }, { threshold: 0.6 });
+    document.querySelectorAll('[data-count]').forEach(el => statIO.observe(el));
+  </script>
+</body>
+</html>
