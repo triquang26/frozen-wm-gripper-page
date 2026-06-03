@@ -202,6 +202,37 @@
       <figure class="measure mx-auto reveal">
         <img src="demo/figs/fig_act1.png" alt="Gripper blindness — the output barely responds to a command flip; in feature space the gripper failure collapses onto the success" class="w-full rounded-xl border border-stone-200 shadow-sm" loading="lazy"/>
       </figure>
+
+      <!-- CROSS-WM AUDIT -->
+      <div class="mt-16 reveal">
+        <div class="text-xs uppercase eyebrow text-stone-400 mb-2 text-center">Not specific to one model</div>
+        <h3 class="text-2xl font-bold text-center mb-4">Three world models, three architectures — all blind</h3>
+        <p class="measure mx-auto text-stone-600 leading-relaxed text-center mb-8">
+          We repeat the gripper-flip audit across three action-conditioned world models spanning architectures
+          (SVD-diffusion, DiT, Omni-MoT) and scales (2.3&nbsp;B → 16&nbsp;B), including <strong>Cosmos3-Nano</strong>,
+          a 16&nbsp;B model released in 2026. Every one ignores the gripper command — confirming the blindness is a
+          property of the training objective, not of any single model or scale.
+        </p>
+        <div class="bg-white rounded-xl border border-stone-200 overflow-x-auto mb-3 measure mx-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-stone-500 border-b border-stone-200">
+              <th class="py-3 px-5 font-medium">World model</th>
+              <th class="py-3 px-5 font-medium">Architecture</th>
+              <th class="py-3 px-5 font-medium">Params</th>
+              <th class="py-3 px-5 font-medium">Gripper-blindness</th>
+            </tr></thead>
+            <tbody class="text-stone-800">
+              <tr class="border-b border-stone-100"><td class="py-3 px-5">Ctrl-World</td><td class="py-3 px-5">SVD-diffusion</td><td class="py-3 px-5 mono">2.3 B</td><td class="py-3 px-5 mono">cos 0.998</td></tr>
+              <tr class="border-b border-stone-100"><td class="py-3 px-5">Cosmos-2B</td><td class="py-3 px-5">DiT + AdaLN</td><td class="py-3 px-5 mono">2 B</td><td class="py-3 px-5 mono">cos 0.9999</td></tr>
+              <tr><td class="py-3 px-5">Cosmos3-Nano</td><td class="py-3 px-5">Omni-MoT DiT</td><td class="py-3 px-5 mono">16 B</td><td class="py-3 px-5 mono">gripper 5.8× weaker than arm</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-stone-400 measure mx-auto mb-8 text-center">Ctrl-World / Cosmos-2B: feature-space cosine under a gripper flip. Cosmos3-Nano: pixel-space, gripper vs. arm command (4 seeds). Different probes — same conclusion.</p>
+        <figure class="measure mx-auto">
+          <img src="demo/figs/fig_crosswm.png" alt="Cross-architecture gripper-blindness audit on Cosmos3-Nano (16B): the gripper command moves the predicted video 5.8x less than an arm command, and constant open vs constant close gripper commands render visually identical" class="w-full rounded-xl border border-stone-200 shadow-sm" loading="lazy"/>
+        </figure>
+      </div>
     </div>
   </section>
 
