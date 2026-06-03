@@ -202,9 +202,10 @@
       <figure class="measure mx-auto reveal">
         <img src="demo/figs/fig_act1.png" alt="Gripper blindness — the output barely responds to a command flip; in feature space the gripper failure collapses onto the success" class="w-full rounded-xl border border-stone-200 shadow-sm" loading="lazy"/>
       </figure>
+    </div><!-- /max-w-3xl -->
 
-      <!-- CROSS-WM AUDIT -->
-      <div class="mt-16 reveal">
+    <!-- CROSS-WM AUDIT (breaks out of max-w-3xl for a wider showcase) -->
+    <div class="max-w-4xl mx-auto mt-16 reveal">
         <div class="text-xs uppercase eyebrow text-stone-400 mb-2 text-center">Not specific to one model</div>
         <h3 class="text-2xl font-bold text-center mb-4">Three world models, three architectures — all blind</h3>
         <p class="measure mx-auto text-stone-600 leading-relaxed text-center mb-8">
@@ -217,7 +218,7 @@
           <strong>different robot entirely</strong> (Bridge/WidowX) fails the same way. The blindness is a property of the
           training objective, not of any single model, scale, or embodiment.
         </p>
-        <div class="space-y-6 measure mx-auto mb-4">
+        <div class="space-y-6 mb-4">
 
           <!-- Ctrl-World -->
           <div class="rounded-xl border border-stone-200 bg-white overflow-hidden">
@@ -278,8 +279,7 @@
         <figure class="measure mx-auto">
           <img src="demo/figs/fig_crosswm.png" alt="Cross-architecture gripper-blindness audit on Cosmos3-Nano (16B): the gripper command moves the predicted video 5.8x less than an arm command, and constant open vs constant close gripper commands render visually identical" class="w-full rounded-xl border border-stone-200 shadow-sm" loading="lazy"/>
         </figure>
-      </div>
-    </div>
+    </div><!-- /cross-WM wide showcase -->
   </section>
 
   <!-- ============================== ACT II — THE MATH ============================== -->
