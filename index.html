@@ -213,20 +213,47 @@
           a 16&nbsp;B model released in 2026. Every one ignores the gripper command — confirming the blindness is a
           property of the training objective, not of any single model or scale.
         </p>
-        <div class="bg-white rounded-xl border border-stone-200 overflow-x-auto mb-3 measure mx-auto">
-          <table class="w-full text-sm">
-            <thead><tr class="text-left text-stone-500 border-b border-stone-200">
-              <th class="py-3 px-5 font-medium">World model</th>
-              <th class="py-3 px-5 font-medium">Architecture</th>
-              <th class="py-3 px-5 font-medium">Params</th>
-              <th class="py-3 px-5 font-medium">Gripper-blindness</th>
-            </tr></thead>
-            <tbody class="text-stone-800">
-              <tr class="border-b border-stone-100"><td class="py-3 px-5">Ctrl-World</td><td class="py-3 px-5">SVD-diffusion</td><td class="py-3 px-5 mono">2.3 B</td><td class="py-3 px-5 mono">cos 0.998</td></tr>
-              <tr class="border-b border-stone-100"><td class="py-3 px-5">Cosmos-2B</td><td class="py-3 px-5">DiT + AdaLN</td><td class="py-3 px-5 mono">2 B</td><td class="py-3 px-5 mono">cos 0.9999</td></tr>
-              <tr><td class="py-3 px-5">Cosmos3-Nano</td><td class="py-3 px-5">Omni-MoT DiT</td><td class="py-3 px-5 mono">16 B</td><td class="py-3 px-5 mono">gripper 5.8× weaker than arm</td></tr>
-            </tbody>
-          </table>
+        <div class="space-y-6 measure mx-auto mb-4">
+
+          <!-- Ctrl-World -->
+          <div class="rounded-xl border border-stone-200 bg-white overflow-hidden">
+            <div class="px-5 py-3.5 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-stone-100">
+              <span class="font-bold text-stone-900 text-lg">Ctrl-World</span>
+              <span class="text-xs text-stone-500">SVD-diffusion · 2.3 B</span>
+              <span class="ml-auto text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">gripper-blind</span>
+              <span class="mono text-sm font-semibold text-stone-700">cos 0.998</span>
+            </div>
+            <div class="bg-black"><img src="demo/labeled_side_by_side.gif" class="w-full" loading="lazy" alt="Ctrl-World: a correct rollout and a gripper-flip rollout render identically"/></div>
+            <div class="px-5 py-3 text-xs text-stone-500">A correct rollout and one that secretly flips the gripper render <strong class="text-stone-700">identically</strong>.</div>
+          </div>
+
+          <!-- Cosmos-2B -->
+          <div class="rounded-xl border border-stone-200 bg-white overflow-hidden">
+            <div class="px-5 py-3.5 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-stone-100">
+              <span class="font-bold text-stone-900 text-lg">Cosmos-2B</span>
+              <span class="text-xs text-stone-500">DiT + AdaLN · 2 B</span>
+              <span class="ml-auto text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">gripper-blind</span>
+              <span class="mono text-sm font-semibold text-stone-700">cos 0.9999</span>
+            </div>
+            <div class="py-9 bg-stone-900 text-center">
+              <div class="mono text-4xl font-extrabold text-white">0.9999</div>
+              <div class="text-[11px] text-stone-400 mt-2">cosine(demo, gripper-flip) — feature-space probe, no decoder</div>
+            </div>
+            <div class="px-5 py-3 text-xs text-stone-500">Mid-block features barely move under a full gripper flip — <strong class="text-stone-700">even more invariant</strong> than Ctrl-World.</div>
+          </div>
+
+          <!-- Cosmos3-Nano -->
+          <div class="rounded-xl border-2 border-emerald-200 bg-white overflow-hidden">
+            <div class="px-5 py-3.5 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-stone-100">
+              <span class="font-bold text-stone-900 text-lg">Cosmos3-Nano</span>
+              <span class="text-xs text-stone-500">Omni-MoT DiT · 16 B · 2026</span>
+              <span class="ml-auto text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">gripper-blind</span>
+              <span class="mono text-sm font-semibold text-stone-700">5.8× weaker</span>
+            </div>
+            <div class="bg-black"><video autoplay loop muted playsinline class="w-full"><source src="demo/clean/cosmos3_oc.mp4" type="video/mp4" /></video></div>
+            <div class="px-5 py-3 text-xs text-stone-500">Commanding the gripper <span class="text-emerald-700 font-medium">constant&nbsp;OPEN</span> vs <span class="text-red-700 font-medium">constant&nbsp;CLOSE</span> produces the same video; the gripper command moves the prediction <strong class="text-stone-700">5.8× less</strong> than the arm (4 seeds).</div>
+          </div>
+
         </div>
         <p class="text-xs text-stone-400 measure mx-auto mb-8 text-center">Ctrl-World / Cosmos-2B: feature-space cosine under a gripper flip. Cosmos3-Nano: pixel-space, gripper vs. arm command (4 seeds). Different probes — same conclusion.</p>
         <figure class="measure mx-auto">
