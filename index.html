@@ -213,10 +213,12 @@
           (<span class="mono">10003</span>, <span class="mono">10024</span>) across <strong>all three cameras</strong>, holding the
           gripper command <span class="text-emerald-700 font-medium">constant&nbsp;OPEN</span> vs
           <span class="text-red-700 font-medium">constant&nbsp;CLOSE</span> for the entire rollout and comparing both against the
-          real demo. Two DROID world models — <strong>Ctrl-World</strong> (2.3&nbsp;B) and <strong>Cosmos3-Nano</strong>
-          (16&nbsp;B, NVIDIA&nbsp;2026) — render the <em>same video</em> regardless of the command, on every camera. A third model on a
-          <strong>different robot entirely</strong> (Bridge/WidowX) fails the same way. The blindness is a property of the
-          training objective, not of any single model, scale, or embodiment.
+          real demo. Two action-conditioned DROID world models — <strong>Ctrl-World</strong> (2.3&nbsp;B) and
+          <strong>Cosmos3-Nano</strong> (16&nbsp;B, NVIDIA&nbsp;2026) — render the <em>same video</em> regardless of the command, on
+          every camera. A third, larger model — <strong>Cosmos-Predict2-14B GR00T-Dreams</strong> (14&nbsp;B) — takes its gripper
+          command as a <strong>text prompt</strong> rather than an action, and ignores it just the same. Whether the gripper is
+          commanded by a low-level action or by language, the blindness is a property of the training objective — not of any
+          single model, scale, architecture, or conditioning modality.
         </p>
         <div class="space-y-6 mb-4">
 
@@ -256,26 +258,26 @@
             <div class="px-5 py-3 text-xs text-stone-500">A 16&nbsp;B 2026 model on the <strong>same trajectories</strong>: the gripper command moves the prediction <strong class="text-stone-700">5.8× less</strong> than the arm command (4 seeds) — <span class="text-emerald-700 font-medium">OPEN</span> and <span class="text-red-700 font-medium">CLOSE</span> stay visually identical.</div>
           </div>
 
-          <!-- Cosmos-Predict2-2B (different robot) -->
+          <!-- Cosmos-Predict2-14B GR00T-Dreams (prompt-conditioned, DROID) -->
           <div class="rounded-xl border border-stone-200 bg-white overflow-hidden">
             <div class="px-5 py-3.5 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-stone-100">
-              <span class="font-bold text-stone-900 text-lg">Cosmos-Predict2-2B</span>
-              <span class="text-xs text-stone-500">DiT · 2 B · Bridge / WidowX</span>
+              <span class="font-bold text-stone-900 text-lg">Cosmos-Predict2-14B</span>
+              <span class="text-xs text-stone-500">GR00T-Dreams DiT · 14 B · DROID · prompt-conditioned</span>
               <span class="ml-auto text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">gripper-blind</span>
-              <span class="mono text-sm font-semibold text-stone-700">cos 0.9999</span>
+              <span class="mono text-sm font-semibold text-stone-700">0.27× seed noise</span>
             </div>
-            <div class="bg-black"><video id="grid-c2b" autoplay loop muted playsinline class="w-full"><source src="demo/audit3/cosmos2b_0.mp4" type="video/mp4" /></video></div>
+            <div class="bg-black"><video id="grid-c14b" autoplay loop muted playsinline class="w-full"><source src="demo/audit3/cosmos14b_10003.mp4" type="video/mp4" /></video></div>
             <div class="flex items-center gap-2 px-5 py-2.5 text-xs border-t border-stone-100">
-              <span class="text-stone-400 mr-1">Bridge traj</span>
-              <button onclick="setGrid('grid-c2b','demo/audit3/cosmos2b_0.mp4',this)" class="px-2.5 py-1 rounded-md border border-stone-200 bg-stone-900 text-white mono">0</button>
-              <button onclick="setGrid('grid-c2b','demo/audit3/cosmos2b_8.mp4',this)" class="px-2.5 py-1 rounded-md border border-stone-200 text-stone-600 mono">8</button>
-              <span class="ml-auto text-stone-400">different robot · single exterior cam</span>
+              <span class="text-stone-400 mr-1">held-out traj</span>
+              <button onclick="setGrid('grid-c14b','demo/audit3/cosmos14b_10003.mp4',this)" class="px-2.5 py-1 rounded-md border border-stone-200 bg-stone-900 text-white mono">10003</button>
+              <button onclick="setGrid('grid-c14b','demo/audit3/cosmos14b_10024.mp4',this)" class="px-2.5 py-1 rounded-md border border-stone-200 text-stone-600 mono">10024</button>
+              <span class="ml-auto text-stone-400">gripper command = a word in the prompt</span>
             </div>
-            <div class="px-5 py-3 text-xs text-stone-500">A <strong>different robot</strong> (WidowX, one camera) — so it can't share the DROID trajectories, but the failure is the same: <span class="text-emerald-700 font-medium">OPEN</span> and <span class="text-red-700 font-medium">CLOSE</span> produce identical frames and their <strong class="text-stone-700">difference map is black</strong>.</div>
+            <div class="px-5 py-3 text-xs text-stone-500">A 14&nbsp;B model that <em>dreams</em> a multi-view DROID video from one frame + a text prompt. Switching the prompt from <span class="text-emerald-700 font-medium">“opens its gripper”</span> to <span class="text-red-700 font-medium">“closes its gripper”</span> moves the video <strong class="text-stone-700">0.27× as much as merely re-rolling the random seed</strong> — it ignores the gripper instruction even when given in plain language.</div>
           </div>
 
         </div>
-        <p class="text-xs text-stone-400 measure mx-auto mb-8 text-center">Each grid is the frozen world model rolled out under a gripper command held constant for the whole horizon. DROID models (Ctrl-World, Cosmos3-Nano): 3 cameras × {OPEN, CLOSE, demo} on the same held-out trajectories. Cosmos-Predict2-2B: one exterior camera with an amplified |OPEN−CLOSE| difference map. Pixel-space and feature-space probes — same conclusion.</p>
+        <p class="text-xs text-stone-400 measure mx-auto mb-8 text-center">Each grid is the frozen world model rolled out (or dreamed) under a fixed gripper command. Ctrl-World &amp; Cosmos3-Nano: gripper held constant OPEN/CLOSE as a low-level action, 3 cameras. Cosmos-Predict2-14B: the gripper command is a word in the text prompt (opens vs closes), measured against seed noise. Whether commanded by action or by language, the gripper is ignored.</p>
         <figure class="measure mx-auto">
           <img src="demo/figs/fig_crosswm.png" alt="Cross-architecture gripper-blindness audit on Cosmos3-Nano (16B): the gripper command moves the predicted video 5.8x less than an arm command, and constant open vs constant close gripper commands render visually identical" class="w-full rounded-xl border border-stone-200 shadow-sm" loading="lazy"/>
         </figure>
