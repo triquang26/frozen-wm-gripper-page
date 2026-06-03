@@ -183,16 +183,16 @@
         on it accepts both.
       </p>
 
-      <div class="grid md:grid-cols-2 gap-6 mb-8">
-        <figure class="reveal">
+      <div class="grid md:grid-cols-3 gap-6 mb-8 items-start">
+        <figure class="reveal md:col-span-2">
           <div class="rounded-xl overflow-hidden border border-stone-200">
-            <img src="demo/labeled_side_by_side.gif" alt="Correct vs gripper-flip rollout — visually identical" class="w-full" loading="lazy" />
+            <img src="demo/labeled_side_by_side.gif" alt="Correct vs gripper-flip rollout — visually identical" class="w-full block" loading="lazy" />
           </div>
           <figcaption class="mt-2 text-xs text-stone-500 text-center">Correct vs. gripper-flip rollout — the WM renders them the same.</figcaption>
         </figure>
-        <figure class="reveal">
+        <figure class="reveal md:col-span-1">
           <div class="rounded-xl overflow-hidden border border-stone-200">
-            <img src="demo/diff_hot.gif" alt="Latent-difference heatmap, near zero everywhere" class="w-full" loading="lazy" />
+            <img src="demo/diff_hot.gif" alt="Latent-difference heatmap, near zero everywhere" class="w-full block" loading="lazy" />
           </div>
           <figcaption class="mt-2 text-xs text-stone-500 text-center">Latent difference (success − flip): near-zero everywhere.</figcaption>
         </figure>
@@ -205,7 +205,7 @@
     </div><!-- /max-w-3xl -->
 
     <!-- CROSS-WM AUDIT (breaks out of max-w-3xl for a wider showcase) -->
-    <div class="max-w-4xl mx-auto mt-16 reveal">
+    <div class="max-w-5xl mx-auto mt-16 reveal">
         <div class="text-xs uppercase eyebrow text-stone-400 mb-2 text-center">Not specific to one model</div>
         <h3 class="text-2xl font-bold text-center mb-4">Three world models, three architectures — all blind</h3>
         <p class="measure mx-auto text-stone-600 leading-relaxed text-center mb-8">
