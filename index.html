@@ -7,19 +7,22 @@
   <meta name="description" content="Interventional de-confounding makes a frozen 2.3B video world model render the robot gripper open/close on command at the pixel level — at preserved video quality, with 0.26% trainable parameters." />
   <meta property="og:title" content="Frozen Video World Models Can Be Made to Follow Gripper Commands" />
   <meta property="og:description" content="A frozen 2.3B world model renders the gripper open/close on command at preserved PSNR via interventional de-confounding." />
-  <meta property="og:image" content="demo/exmask/poster_10003.jpg" />
+  <meta property="og:image" content="demo/clean/poster_10003.jpg" />
   <meta property="og:type" content="website" />
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <script>
-    MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }, svg: { fontCache: 'global' } };
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+  <!-- KaTeX — reliable LaTeX-quality math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true},{left:'$$',right:'$$',display:true}],throwOnError:false});"></script>
 
   <style>
     html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', system-ui, sans-serif; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif; }
     code, pre, .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
     .measure { max-width: 720px; }
     .measure-narrow { max-width: 640px; }
@@ -29,7 +32,7 @@
     .eyebrow { letter-spacing: .18em; }
     .lift { transition: box-shadow .25s ease, transform .25s ease; }
     .lift:hover { box-shadow: 0 12px 32px -12px rgba(0,0,0,.18); transform: translateY(-2px); }
-    mjx-container { font-size: 1.02em !important; }
+    .katex { font-size: 1.05em; }
     /* ---- cool act visualizations ---- */
     .viz { background: linear-gradient(180deg,#0c1018,#090c12); color:#e8eaf0; border:1px solid rgba(255,255,255,.07); }
     .viz .eyebrow { color:#7c8699; }
@@ -76,16 +79,15 @@
     <!-- HERO VIDEO -->
     <figure class="max-w-3xl mx-auto mt-12">
       <div class="rounded-2xl overflow-hidden border border-stone-200 shadow-lg bg-black">
-        <video autoplay loop muted playsinline poster="demo/exmask/poster_10003.jpg" class="w-full">
-          <source src="demo/exmask/openclose_10003.mp4" type="video/mp4" />
+        <video autoplay loop muted playsinline poster="demo/clean/poster_10003.jpg" class="w-full">
+          <source src="demo/clean/ctrl_10003.mp4" type="video/mp4" />
         </video>
       </div>
       <figcaption class="mt-3 text-sm text-stone-500 measure mx-auto text-center">
         <strong class="text-stone-700">Same held-out wrist scene, two commands.</strong> Left: the model is told
-        <span class="text-emerald-700 font-medium">OPEN</span> → the gripper stays open. Right: told
+        <span class="text-emerald-700 font-medium">OPEN</span> → the gripper fingers stay spread. Right: told
         <span class="text-red-700 font-medium">CLOSE</span> → the fingers visibly close. The world model is
-        <em>frozen</em>; only a 6&nbsp;M-parameter adapter steers it. This trajectory reproduces
-        <strong class="text-stone-700">87%</strong> of the ground-truth's own open→close motion.
+        <em>frozen</em>; only a 6&nbsp;M-parameter adapter steers it.
       </figcaption>
     </figure>
 
@@ -296,64 +298,66 @@
       <!-- FIG · Act III (method pipeline) -->
       <figure class="measure mx-auto mb-14 reveal">
         <img src="demo/figs/fig_act3.png" alt="Method pipeline: a frozen world model runs two forward passes (true and flipped command); their difference is the arm-free mask M_dyn; learning inside it with an exemplar target makes the gripper follow at preserved PSNR" class="w-full rounded-xl border border-stone-200 shadow-sm" loading="lazy"/>
+        <figcaption class="mt-4 measure-narrow mx-auto text-center text-sm text-stone-600 bg-stone-50 border border-stone-200 rounded-lg px-4 py-3">
+          <strong class="text-stone-800">Training only.</strong> The two forward passes and the mask
+          \(M_{\mathrm{dyn}}\) are used purely to train the 6&nbsp;M-parameter adapter. <strong class="text-stone-800">At
+          inference the model runs a single forward pass</strong> with your command — the same cost as the original
+          world model, no mask and no second pass.
+        </figcaption>
       </figure>
 
-      <!-- DEMO GRID -->
-      <h3 class="text-xl font-semibold text-center mb-2 reveal">It generalizes across held-out trajectories</h3>
+      <!-- BEFORE / AFTER (honest, traj 10046) -->
+      <h3 class="text-xl font-semibold text-center mb-2 reveal">Before vs. after — same scene, weights frozen</h3>
       <p class="text-sm text-stone-500 text-center mb-8 measure-narrow mx-auto reveal">
-        Each clip: the same wrist scene under <span class="text-emerald-700 font-medium">OPEN</span> vs.
-        <span class="text-red-700 font-medium">CLOSE</span> command. Percentage = fraction of the ground-truth's own
-        open→close motion reproduced.
+        Held-out traj 10046, wrist camera. Each clip shows the scene under the
+        <span class="text-emerald-700 font-medium">OPEN</span> and the <span class="text-red-700 font-medium">CLOSE</span> command.
+      </p>
+      <div class="grid sm:grid-cols-2 gap-5 measure mx-auto">
+        <figure class="reveal">
+          <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
+            <video autoplay loop muted playsinline class="w-full"><source src="demo/clean/frozen_10046.mp4" type="video/mp4" /></video>
+          </div>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center"><strong class="text-stone-700">Pretrained world model</strong> — OPEN and CLOSE render the same; the gripper ignores the command.</figcaption>
+        </figure>
+        <figure class="reveal">
+          <div class="rounded-xl overflow-hidden border-2 border-emerald-300 bg-black">
+            <video autoplay loop muted playsinline class="w-full"><source src="demo/clean/ctrl_10046.mp4" type="video/mp4" /></video>
+          </div>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center"><strong class="text-emerald-700">+ our adapter</strong> — the gripper now responds to the command.</figcaption>
+        </figure>
+      </div>
+
+      <!-- CONTROL DEMOS -->
+      <h3 class="text-xl font-semibold text-center mt-16 mb-2 reveal">Open or closed, on demand</h3>
+      <p class="text-sm text-stone-500 text-center mb-8 measure-narrow mx-auto reveal">
+        More held-out scenes. Same view, two commands: <span class="text-emerald-700 font-medium">OPEN</span> (left) vs.
+        <span class="text-red-700 font-medium">CLOSE</span> (right) — the gripper fingers visibly spread or close.
       </p>
       <div class="grid sm:grid-cols-2 gap-5">
         <figure class="reveal">
           <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
-            <video autoplay loop muted playsinline class="w-full"><source src="demo/exmask/openclose_10024.mp4" type="video/mp4" /></video>
+            <video autoplay loop muted playsinline class="w-full"><source src="demo/clean/ctrl_10003.mp4" type="video/mp4" /></video>
           </div>
-          <figcaption class="mt-2 text-xs text-stone-500 text-center">Held-out traj 10024 · <strong>84%</strong> of GT swing</figcaption>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center">Held-out traj 10003</figcaption>
         </figure>
         <figure class="reveal">
           <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
-            <video autoplay loop muted playsinline class="w-full"><source src="demo/exmask/openclose_10046.mp4" type="video/mp4" /></video>
+            <video autoplay loop muted playsinline class="w-full"><source src="demo/clean/ctrl_10024.mp4" type="video/mp4" /></video>
           </div>
-          <figcaption class="mt-2 text-xs text-stone-500 text-center">Held-out traj 10046 · <strong>76%</strong> of GT swing</figcaption>
-        </figure>
-        <figure class="reveal">
-          <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
-            <video autoplay loop muted playsinline class="w-full"><source src="demo/exmask/openclose_10010.mp4" type="video/mp4" /></video>
-          </div>
-          <figcaption class="mt-2 text-xs text-stone-500 text-center">Held-out traj 10010 · <strong>67%</strong> of GT swing</figcaption>
-        </figure>
-        <figure class="reveal">
-          <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
-            <video autoplay loop muted playsinline class="w-full"><source src="demo/exmask/openclose_10056.mp4" type="video/mp4" /></video>
-          </div>
-          <figcaption class="mt-2 text-xs text-stone-500 text-center">Held-out traj 10056 · <strong>30%</strong> of GT swing</figcaption>
+          <figcaption class="mt-2 text-xs text-stone-500 text-center">Held-out traj 10024</figcaption>
         </figure>
       </div>
 
-      <!-- BEFORE/AFTER SLOT (render-later) -->
-      <div class="mt-10 rounded-xl border-2 border-dashed border-stone-300 bg-stone-50 p-8 text-center reveal">
-        <div class="text-sm font-semibold text-stone-700 mb-1">Before / after: frozen vs. controlled <span class="tbd ml-1">render pending</span></div>
-        <p class="text-xs text-stone-500 measure-narrow mx-auto leading-relaxed">
-          A side-by-side of the <em>frozen</em> world model (gripper ignores the command) against the controlled model
-          (gripper follows) on the same trajectory. The controlled side is shown above; the frozen baseline render
-          slots in here.
-        </p>
-      </div>
-
-      <details class="mt-8 measure mx-auto reveal">
-        <summary class="text-sm text-stone-600 cursor-pointer hover:text-stone-900">Detailed readout (4-panel: demo · open · close · difference)</summary>
-        <figure class="mt-4">
-          <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
-            <video controls loop muted playsinline class="w-full"><source src="demo/exmask/detail_10003.mp4" type="video/mp4" /></video>
-          </div>
-          <figcaption class="mt-2 text-xs text-stone-500 text-center">
-            Traj 10003. Panels: original rollout · OPEN command · CLOSE command · |OPEN&minus;CLOSE|×5 difference. The
-            difference concentrates on the gripper, and the openness readout (bottom strip) separates cleanly.
-          </figcaption>
-        </figure>
-      </details>
+      <!-- SWITCH MONTAGE -->
+      <figure class="mt-12 mx-auto max-w-xs reveal">
+        <div class="rounded-xl overflow-hidden border border-stone-200 bg-black">
+          <video autoplay loop muted playsinline class="w-full"><source src="demo/clean/switch_10003.mp4" type="video/mp4" /></video>
+        </div>
+        <figcaption class="mt-2 text-xs text-stone-500 text-center">
+          Toggling the command <span class="text-emerald-700 font-medium">OPEN</span> →
+          <span class="text-red-700 font-medium">CLOSE</span> → OPEN → CLOSE: the rendered gripper tracks each command.
+        </figcaption>
+      </figure>
     </div>
   </section>
 
@@ -384,11 +388,6 @@
               <td class="py-3 px-5 text-emerald-700 font-semibold">19 / 20</td>
             </tr>
             <tr class="border-b border-stone-100">
-              <td class="py-3 px-5 font-sans">Open→close motion reproduced</td>
-              <td class="py-3 px-5 text-stone-400">~0%</td>
-              <td class="py-3 px-5 text-emerald-700 font-semibold">~69%</td>
-            </tr>
-            <tr class="border-b border-stone-100">
               <td class="py-3 px-5 font-sans">Memorization (copies demo gripper?)</td>
               <td class="py-3 px-5 text-red-600">+0.55</td>
               <td class="py-3 px-5 text-emerald-700 font-semibold">&minus;0.19</td>
@@ -407,15 +406,18 @@
         </table>
       </div>
 
-      <!-- frac bars -->
+      <!-- per-traj frozen vs adapter -->
       <div class="bg-white rounded-xl border border-stone-200 p-6 reveal">
-        <div class="text-xs uppercase eyebrow text-stone-400 mb-4">Per-trajectory motion reproduced (wrist)</div>
-        <div class="space-y-3 mono text-xs">
-          <div class="flex items-center gap-3"><span class="w-14 text-stone-500">10003</span><div class="flex-1 bg-stone-100 rounded-full h-3"><div class="bg-emerald-500 h-3 rounded-full" style="width:87%"></div></div><span class="w-10 text-right">87%</span></div>
-          <div class="flex items-center gap-3"><span class="w-14 text-stone-500">10024</span><div class="flex-1 bg-stone-100 rounded-full h-3"><div class="bg-emerald-500 h-3 rounded-full" style="width:84%"></div></div><span class="w-10 text-right">84%</span></div>
-          <div class="flex items-center gap-3"><span class="w-14 text-stone-500">10046</span><div class="flex-1 bg-stone-100 rounded-full h-3"><div class="bg-emerald-500 h-3 rounded-full" style="width:76%"></div></div><span class="w-10 text-right">76%</span></div>
-          <div class="flex items-center gap-3"><span class="w-14 text-stone-500">10010</span><div class="flex-1 bg-stone-100 rounded-full h-3"><div class="bg-emerald-500 h-3 rounded-full" style="width:67%"></div></div><span class="w-10 text-right">67%</span></div>
-          <div class="flex items-center gap-3"><span class="w-14 text-stone-500">10056</span><div class="flex-1 bg-stone-100 rounded-full h-3"><div class="bg-emerald-400 h-3 rounded-full" style="width:30%"></div></div><span class="w-10 text-right">30%</span></div>
+        <div class="flex items-center justify-between mb-1">
+          <div class="text-xs uppercase eyebrow text-stone-400">Open→close motion per trajectory (wrist)</div>
+          <div class="text-[11px] text-stone-500"><span class="inline-block w-2.5 h-2.5 rounded-full bg-stone-400 align-middle"></span> frozen &nbsp; <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 align-middle"></span> + adapter</div>
+        </div>
+        <div class="text-xs text-stone-500 mb-5">Higher = the rendered gripper moves more between the OPEN and CLOSE command. The frozen baseline's small, variable response is diffuse scene change; the adapter's concentrates on the gripper.</div>
+        <div class="space-y-4 text-xs">
+          <div class="flex items-center gap-3"><span class="w-14 text-stone-500 mono">10010</span><div class="flex-1 space-y-1.5"><div class="bg-stone-100 rounded-full h-2.5"><div class="bg-stone-400 h-2.5 rounded-full" style="width:9%"></div></div><div class="bg-stone-100 rounded-full h-2.5"><div class="bg-emerald-500 h-2.5 rounded-full" style="width:67%"></div></div></div><span class="w-16 text-right mono text-stone-400">9 → 67%</span></div>
+          <div class="flex items-center gap-3"><span class="w-14 text-stone-500 mono">10046</span><div class="flex-1 space-y-1.5"><div class="bg-stone-100 rounded-full h-2.5"><div class="bg-stone-400 h-2.5 rounded-full" style="width:14%"></div></div><div class="bg-stone-100 rounded-full h-2.5"><div class="bg-emerald-500 h-2.5 rounded-full" style="width:76%"></div></div></div><span class="w-16 text-right mono text-stone-400">14 → 76%</span></div>
+          <div class="flex items-center gap-3"><span class="w-14 text-stone-500 mono">10024</span><div class="flex-1 space-y-1.5"><div class="bg-stone-100 rounded-full h-2.5"><div class="bg-stone-400 h-2.5 rounded-full" style="width:23%"></div></div><div class="bg-stone-100 rounded-full h-2.5"><div class="bg-emerald-500 h-2.5 rounded-full" style="width:84%"></div></div></div><span class="w-16 text-right mono text-stone-400">23 → 84%</span></div>
+          <div class="flex items-center gap-3"><span class="w-14 text-stone-500 mono">10003</span><div class="flex-1 space-y-1.5"><div class="bg-stone-100 rounded-full h-2.5"><div class="bg-stone-400 h-2.5 rounded-full" style="width:55%"></div></div><div class="bg-stone-100 rounded-full h-2.5"><div class="bg-emerald-500 h-2.5 rounded-full" style="width:87%"></div></div></div><span class="w-16 text-right mono text-stone-400">55 → 87%</span></div>
         </div>
       </div>
     </div>
